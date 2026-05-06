@@ -1,0 +1,2211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ObvIA — Observatoire de l'IA dans les arts et les médias</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow+Condensed:wght@300;400;600;700;900&family=Barlow:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #060810;
+    --bg2: #0c1020;
+    --bg3: #111828;
+    --cyan: #00f5ff;
+    --magenta: #ff006e;
+    --yellow: #f5e642;
+    --white: #e8eaf0;
+    --gray: #7a8090;
+    --border: rgba(0,245,255,0.15);
+    --glow-c: 0 0 20px rgba(0,245,255,0.4);
+    --glow-m: 0 0 20px rgba(255,0,110,0.4);
+    --font-mono: 'Share Tech Mono', monospace;
+    --font-condensed: 'Barlow Condensed', sans-serif;
+    --font-body: 'Barlow', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: var(--font-body);
+    font-weight: 300;
+    overflow-x: hidden;
+    cursor: crosshair;
+  }
+
+  /* Scanlines overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* Grid bg */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── NAV ─── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    background: rgba(6,8,16,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2rem;
+    height: 60px;
+  }
+
+  .nav-logo {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    color: var(--cyan);
+    text-shadow: var(--glow-c);
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .nav-logo span { color: var(--magenta); text-shadow: var(--glow-m); }
+
+  .nav-links {
+    display: flex;
+    gap: 0.2rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-family: var(--font-condensed);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--gray);
+    padding: 6px 14px;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .nav-links a:hover, .nav-links a.active {
+    color: var(--cyan);
+    border-color: var(--border);
+    text-shadow: var(--glow-c);
+    background: rgba(0,245,255,0.04);
+  }
+
+  .lang-switch {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--yellow);
+    cursor: pointer;
+    border: 1px solid rgba(245,230,66,0.3);
+    padding: 4px 10px;
+    transition: all 0.2s;
+    background: transparent;
+    letter-spacing: 1px;
+  }
+
+  .lang-switch:hover {
+    background: rgba(245,230,66,0.08);
+    box-shadow: 0 0 12px rgba(245,230,66,0.3);
+  }
+
+  /* ─── PAGES ─── */
+  .page { display: none; min-height: 100vh; padding-top: 60px; position: relative; z-index: 1; }
+  .page.active { display: block; }
+
+  /* ─── HERO ─── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-condensed);
+    font-size: clamp(6rem, 18vw, 20rem);
+    font-weight: 900;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(0,245,255,0.06);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .hero-tag {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--magenta);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-tag::before {
+    content: '';
+    display: inline-block;
+    width: 40px;
+    height: 1px;
+    background: var(--magenta);
+    box-shadow: var(--glow-m);
+  }
+
+  .hero-title {
+    font-family: var(--font-condensed);
+    font-size: clamp(3rem, 8vw, 7rem);
+    font-weight: 900;
+    line-height: 0.9;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-title .t1 { color: var(--cyan); text-shadow: var(--glow-c); }
+  .hero-title .t2 { color: var(--white); }
+
+  .hero-subtitle {
+    font-family: var(--font-condensed);
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    font-weight: 300;
+    color: var(--gray);
+    max-width: 700px;
+    line-height: 1.4;
+    margin-bottom: 3rem;
+    letter-spacing: 0.5px;
+  }
+
+  .hero-subtitle .lang-fr, .hero-subtitle .lang-en { display: block; }
+
+  .hero-cta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .btn {
+    font-family: var(--font-condensed);
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+    display: inline-block;
+  }
+
+  .btn-primary {
+    background: var(--cyan);
+    color: var(--bg);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+
+  .btn-primary:hover {
+    background: #fff;
+    box-shadow: var(--glow-c);
+    transform: translateY(-2px);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--magenta);
+    border: 1px solid var(--magenta);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  }
+
+  .btn-outline:hover {
+    background: rgba(255,0,110,0.1);
+    box-shadow: var(--glow-m);
+    transform: translateY(-2px);
+  }
+
+  /* ─── SECTION GENERIC ─── */
+  section { padding: 6rem 4rem; }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 4px;
+    color: var(--magenta);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    max-width: 60px;
+    height: 1px;
+    background: var(--magenta);
+  }
+
+  .section-title {
+    font-family: var(--font-condensed);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 3rem;
+    letter-spacing: -0.01em;
+  }
+
+  .section-title .accent { color: var(--cyan); }
+
+  /* ─── ABOUT SECTION ─── */
+  .about-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: start;
+  }
+
+  .about-text p {
+    color: var(--gray);
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  .about-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .stat-box {
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+
+  .stat-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: var(--cyan);
+    box-shadow: var(--glow-c);
+  }
+
+  .stat-box:hover { border-color: rgba(0,245,255,0.4); }
+
+  .stat-number {
+    font-family: var(--font-condensed);
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--cyan);
+    line-height: 1;
+    text-shadow: var(--glow-c);
+  }
+
+  .stat-label {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--gray);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+  }
+
+  /* Axes thématiques */
+  .axes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+
+  .axe-card {
+    border: 1px solid var(--border);
+    padding: 2rem;
+    background: var(--bg2);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .axe-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .axe-card:hover { background: var(--bg3); border-color: rgba(0,245,255,0.3); }
+  .axe-card:hover::after { transform: scaleX(1); }
+
+  .axe-num {
+    font-family: var(--font-mono);
+    font-size: 2.5rem;
+    color: rgba(0,245,255,0.12);
+    font-weight: 900;
+    position: absolute;
+    top: 1rem; right: 1rem;
+  }
+
+  .axe-title {
+    font-family: var(--font-condensed);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .axe-text {
+    font-size: 0.85rem;
+    color: var(--gray);
+    line-height: 1.7;
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0 4rem;
+    position: relative;
+  }
+
+  .divider::after {
+    content: '//';
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--cyan);
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg);
+    padding: 0 1rem;
+  }
+
+  /* ─── PEOPLE PAGE ─── */
+  .people-section { padding: 4rem; }
+
+  .team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .person-card {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .person-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--cyan), transparent);
+  }
+
+  .person-card:nth-child(even)::before {
+    background: linear-gradient(90deg, var(--magenta), transparent);
+  }
+
+  .person-card:hover {
+    border-color: rgba(0,245,255,0.35);
+    background: var(--bg3);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  }
+
+  .person-avatar {
+    width: 56px;
+    height: 56px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 1.2rem;
+    color: var(--cyan);
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+  }
+
+  .person-name {
+    font-family: var(--font-condensed);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.3rem;
+  }
+
+  .person-role {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    margin-bottom: 0.5rem;
+  }
+
+  .person-affiliation {
+    font-size: 0.78rem;
+    color: var(--gray);
+    line-height: 1.5;
+  }
+
+  .committee-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1rem;
+  }
+
+  .committee-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    border: 1px solid var(--border);
+    padding: 1rem 1.2rem;
+    background: var(--bg2);
+    transition: all 0.2s;
+  }
+
+  .committee-item:hover {
+    border-color: rgba(255,0,110,0.3);
+    background: var(--bg3);
+  }
+
+  .committee-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--magenta);
+    flex-shrink: 0;
+    box-shadow: var(--glow-m);
+  }
+
+  .committee-name {
+    font-family: var(--font-condensed);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--white);
+  }
+
+  .committee-inst {
+    font-size: 0.75rem;
+    color: var(--gray);
+  }
+
+  /* ─── EVENTS PAGE ─── */
+  .events-list { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  .event-card {
+    display: grid;
+    grid-template-columns: 120px 1fr auto;
+    gap: 2rem;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 1.8rem 2rem;
+    align-items: center;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .event-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--cyan);
+  }
+
+  .event-card.past::before { background: var(--gray); }
+
+  .event-card:hover {
+    border-color: rgba(0,245,255,0.3);
+    background: var(--bg3);
+    transform: translateX(4px);
+  }
+
+  .event-date {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--cyan);
+    letter-spacing: 1px;
+    line-height: 1.6;
+  }
+
+  .event-date.past { color: var(--gray); }
+
+  .event-title {
+    font-family: var(--font-condensed);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.4rem;
+  }
+
+  .event-desc {
+    font-size: 0.82rem;
+    color: var(--gray);
+    line-height: 1.6;
+  }
+
+  .event-type {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .event-type.conference { color: var(--cyan); border-color: rgba(0,245,255,0.4); }
+  .event-type.workshop { color: var(--magenta); border-color: rgba(255,0,110,0.4); }
+  .event-type.seminar { color: var(--yellow); border-color: rgba(245,230,66,0.4); }
+
+  /* ─── PUBLICATIONS ─── */
+  .pub-list { display: flex; flex-direction: column; gap: 1.2rem; }
+
+  .pub-item {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 1.5rem 2rem;
+    transition: all 0.3s;
+    position: relative;
+  }
+
+  .pub-item::after {
+    content: '';
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--magenta);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .pub-item:hover {
+    border-color: rgba(255,0,110,0.3);
+    background: var(--bg3);
+  }
+
+  .pub-item:hover::after { opacity: 1; }
+
+  .pub-type {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: var(--magenta);
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .pub-title {
+    font-family: var(--font-condensed);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--white);
+    margin-bottom: 0.4rem;
+    line-height: 1.3;
+  }
+
+  .pub-authors {
+    font-size: 0.82rem;
+    color: var(--cyan);
+    margin-bottom: 0.3rem;
+  }
+
+  .pub-journal {
+    font-size: 0.78rem;
+    color: var(--gray);
+    font-style: italic;
+  }
+
+  .pub-year {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--yellow);
+    margin-top: 0.5rem;
+  }
+
+  /* ─── CONTENTS PAGE ─── */
+  .videos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+  }
+
+  .video-card {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+
+  .video-card:hover {
+    border-color: rgba(0,245,255,0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  .video-thumb {
+    aspect-ratio: 16/9;
+    background: var(--bg3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+  }
+
+  .video-thumb::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,245,255,0.05), rgba(255,0,110,0.05));
+  }
+
+  .video-thumb-lines {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .play-btn {
+    width: 56px;
+    height: 56px;
+    border: 2px solid var(--cyan);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    transition: all 0.3s;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    background: rgba(0,245,255,0.08);
+  }
+
+  .play-btn::after {
+    content: '';
+    border-style: solid;
+    border-width: 10px 0 10px 18px;
+    border-color: transparent transparent transparent var(--cyan);
+    margin-left: 4px;
+  }
+
+  .video-card:hover .play-btn {
+    background: rgba(0,245,255,0.2);
+    box-shadow: var(--glow-c);
+  }
+
+  .video-info { padding: 1.2rem; }
+
+  .video-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--magenta);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .video-title {
+    font-family: var(--font-condensed);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--white);
+    line-height: 1.3;
+    margin-bottom: 0.4rem;
+  }
+
+  .video-speaker {
+    font-size: 0.78rem;
+    color: var(--cyan);
+    margin-bottom: 0.3rem;
+  }
+
+  .video-date {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    color: var(--gray);
+  }
+
+  /* ─── PAGE HEADER ─── */
+  .page-header {
+    padding: 4rem 4rem 2rem;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page-header-bg {
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    font-family: var(--font-condensed);
+    font-size: 15rem;
+    font-weight: 900;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(0,245,255,0.04);
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  /* ─── TICKER ─── */
+  .ticker-wrap {
+    background: var(--magenta);
+    overflow: hidden;
+    padding: 6px 0;
+    position: relative;
+    z-index: 1;
+  }
+
+  .ticker {
+    display: flex;
+    white-space: nowrap;
+    animation: ticker 30s linear infinite;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 2px;
+    color: var(--bg);
+    font-weight: bold;
+  }
+
+  .ticker span { padding: 0 3rem; }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* ─── FOOTER ─── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: 2rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .footer-logo {
+    font-family: var(--font-mono);
+    font-size: 1.3rem;
+    color: var(--cyan);
+    text-shadow: var(--glow-c);
+  }
+
+  .footer-desc {
+    font-size: 0.8rem;
+    color: var(--gray);
+    margin-top: 0.5rem;
+    max-width: 400px;
+    line-height: 1.6;
+  }
+
+  .footer-right {
+    text-align: right;
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--gray);
+    line-height: 2;
+  }
+
+  /* ─── GLITCH ─── */
+  @keyframes glitch {
+    0%, 95%, 100% { transform: translate(0); }
+    96% { transform: translate(-2px, 1px); filter: hue-rotate(90deg); }
+    97% { transform: translate(2px, -1px); }
+    98% { transform: translate(-1px, 2px); }
+  }
+
+  .hero-title { animation: glitch 8s infinite; }
+
+  /* ─── CURSOR GLOW ─── */
+  .cursor-glow {
+    position: fixed;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,245,255,0.04) 0%, transparent 70%);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    z-index: 9998;
+    transition: 0.1s;
+  }
+
+  /* ─── RESPONSIVE ─── */
+  @media (max-width: 900px) {
+    section, .people-section { padding: 3rem 1.5rem; }
+    .hero { padding: 0 1.5rem; }
+    .about-grid { grid-template-columns: 1fr; }
+    .axes-grid { grid-template-columns: 1fr; }
+    .event-card { grid-template-columns: 1fr; gap: 0.8rem; }
+    footer { grid-template-columns: 1fr; }
+    .footer-right { text-align: left; }
+    .page-header { padding: 3rem 1.5rem 2rem; }
+    nav { padding: 0 1rem; }
+    .nav-links { gap: 0; }
+    .nav-links a { padding: 6px 8px; font-size: 0.75rem; }
+    .divider { margin: 0 1.5rem; }
+    .videos-grid { grid-template-columns: 1fr; }
+    .team-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  }
+
+  /* ─── LANG HANDLING ─── */
+  .fr, .en { display: block; }
+  body.lang-en .fr { display: none; }
+  body.lang-fr .en { display: none; }
+  body.lang-fr .fr { display: block; }
+  body.lang-en .en { display: block; }
+  span.fr, span.en { display: inline; }
+  body.lang-en span.fr { display: none; }
+  body.lang-fr span.en { display: none; }
+
+  /* Default to FR */
+  .en { display: none; }
+  .fr { display: block; }
+  span.en { display: none; }
+  span.fr { display: inline; }
+
+  /* ─── PROJET CARDS ─── */
+  .projet-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
+
+  .projet-card {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 2.5rem;
+    position: relative;
+    transition: border-color 0.3s;
+  }
+
+  .projet-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  }
+
+  .projet-card:hover { border-color: rgba(0,245,255,0.35); }
+
+  .projet-card-title {
+    font-family: var(--font-condensed);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--cyan);
+    margin-bottom: 1.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+  }
+
+  .projet-card-text {
+    font-size: 0.88rem;
+    color: var(--gray);
+    line-height: 1.8;
+    margin-bottom: 1rem;
+  }
+
+  /* ─── DISCLAIMER ─── */
+  .disclaimer-box {
+    margin-top: 2.5rem;
+    border: 1px solid rgba(245,230,66,0.25);
+    background: rgba(245,230,66,0.04);
+    padding: 1.2rem 1.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--yellow);
+    letter-spacing: 0.5px;
+    line-height: 1.7;
+    position: relative;
+  }
+
+  .disclaimer-box::before {
+    content: '// NOTICE';
+    font-size: 0.6rem;
+    letter-spacing: 3px;
+    color: rgba(245,230,66,0.5);
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  /* ─── BIO MODAL ─── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(6,8,16,0.88);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(6px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    max-width: 560px;
+    width: 90%;
+    padding: 3rem;
+    position: relative;
+    animation: fadeInUp 0.25s ease;
+  }
+
+  .modal-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1rem; right: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: var(--gray);
+    cursor: pointer;
+    background: none;
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    transition: all 0.2s;
+  }
+
+  .modal-close:hover { color: var(--magenta); border-color: rgba(255,0,110,0.4); }
+
+  .modal-avatar {
+    width: 64px; height: 64px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 1.3rem; color: var(--cyan);
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+    margin-bottom: 1.2rem;
+  }
+
+  .modal-name {
+    font-family: var(--font-condensed);
+    font-size: 1.6rem; font-weight: 800;
+    color: var(--white); margin-bottom: 0.3rem;
+  }
+
+  .modal-role {
+    font-family: var(--font-mono);
+    font-size: 0.7rem; color: var(--cyan);
+    letter-spacing: 2px; margin-bottom: 0.3rem;
+  }
+
+  .modal-affil {
+    font-size: 0.8rem; color: var(--gray); margin-bottom: 1.5rem;
+  }
+
+  .modal-bio {
+    font-size: 0.88rem; color: var(--gray); line-height: 1.8;
+    border-top: 1px solid var(--border); padding-top: 1.2rem;
+  }
+
+  /* ─── PHOTO GALLERY ─── */
+  .photos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .photo-card {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    overflow: hidden;
+    transition: all 0.3s;
+    cursor: pointer;
+  }
+
+  .photo-card:hover {
+    border-color: rgba(0,245,255,0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  .photo-thumb {
+    aspect-ratio: 4/3;
+    background: var(--bg3);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+
+  .photo-thumb::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(0,245,255,0.06), rgba(255,0,110,0.06));
+  }
+
+  .photo-thumb-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.04) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+
+  .photo-icon {
+    position: relative; z-index: 1;
+    font-family: var(--font-mono);
+    font-size: 2rem; color: rgba(0,245,255,0.25);
+  }
+
+  .photo-info { padding: 1.2rem; }
+
+  .photo-tag {
+    font-family: var(--font-mono);
+    font-size: 0.65rem; color: var(--cyan);
+    letter-spacing: 2px; text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .photo-title {
+    font-family: var(--font-condensed);
+    font-size: 1rem; font-weight: 700;
+    color: var(--white); line-height: 1.3;
+    margin-bottom: 0.3rem;
+  }
+
+  .photo-date {
+    font-family: var(--font-mono);
+    font-size: 0.65rem; color: var(--gray);
+  }
+
+  /* ─── PHOTO EVENT MODAL ─── */
+  .photo-modal-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(6,8,16,0.92);
+    z-index: 2000;
+    align-items: flex-start; justify-content: center;
+    backdrop-filter: blur(6px);
+    overflow-y: auto; padding: 80px 20px 40px;
+  }
+
+  .photo-modal-overlay.open { display: flex; }
+
+  .photo-modal-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    max-width: 860px; width: 100%;
+    padding: 3rem; position: relative;
+    animation: fadeInUp 0.25s ease;
+  }
+
+  .photo-modal-box::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--cyan), var(--magenta));
+  }
+
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem; margin-top: 1.5rem;
+  }
+
+  .gallery-item {
+    aspect-ratio: 4/3;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono); font-size: 0.65rem;
+    color: var(--gray); letter-spacing: 1px;
+    position: relative; overflow: hidden;
+  }
+
+  .gallery-item::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,245,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,245,255,0.03) 1px, transparent 1px);
+    background-size: 15px 15px;
+  }
+
+  /* ─── PEDAGOGIE PAGE ─── */
+  .pedago-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .pedago-card {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 2rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .pedago-card::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--magenta), var(--cyan));
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 0.3s;
+  }
+
+  .pedago-card:hover { background: var(--bg3); border-color: rgba(255,0,110,0.3); transform: translateY(-3px); }
+  .pedago-card:hover::after { transform: scaleX(1); }
+
+  .pedago-tag {
+    font-family: var(--font-mono); font-size: 0.65rem;
+    color: var(--magenta); letter-spacing: 2px;
+    text-transform: uppercase; margin-bottom: 0.8rem;
+  }
+
+  .pedago-title {
+    font-family: var(--font-condensed); font-size: 1.15rem;
+    font-weight: 700; color: var(--white);
+    margin-bottom: 0.5rem; line-height: 1.3;
+  }
+
+  .pedago-desc {
+    font-size: 0.82rem; color: var(--gray); line-height: 1.6;
+    margin-bottom: 0.8rem;
+  }
+
+  .pedago-meta {
+    font-family: var(--font-mono); font-size: 0.65rem;
+    color: var(--cyan); letter-spacing: 1px;
+  }
+
+  /* Pedago modal */
+  .pedago-modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(6,8,16,0.92); z-index: 2000;
+    align-items: flex-start; justify-content: center;
+    backdrop-filter: blur(6px);
+    overflow-y: auto; padding: 80px 20px 40px;
+  }
+
+  .pedago-modal-overlay.open { display: flex; }
+
+  .pedago-modal-box {
+    background: var(--bg2); border: 1px solid var(--border);
+    max-width: 720px; width: 100%;
+    padding: 3rem; position: relative;
+    animation: fadeInUp 0.25s ease;
+  }
+
+  .pedago-modal-box::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px; background: linear-gradient(90deg, var(--magenta), var(--cyan));
+  }
+
+  .material-list { margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.8rem; }
+
+  .material-item {
+    border: 1px solid var(--border); background: var(--bg3);
+    padding: 1rem 1.2rem; display: flex;
+    align-items: center; gap: 1rem;
+  }
+
+  .material-icon {
+    font-family: var(--font-mono); font-size: 1rem;
+    color: var(--cyan); flex-shrink: 0;
+  }
+
+  .material-label { font-size: 0.85rem; color: var(--white); }
+  .material-sub { font-family: var(--font-mono); font-size: 0.65rem; color: var(--gray); }
+
+  /* ─── TERRAINS PAGE ─── */
+  .terrain-intro {
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    padding: 2.5rem;
+    font-size: 0.92rem;
+    color: var(--gray);
+    line-height: 1.9;
+    position: relative;
+  }
+
+  .terrain-intro::before {
+    content: '';
+    position: absolute; top: 0; left: 0; bottom: 0;
+    width: 3px; background: var(--cyan); box-shadow: var(--glow-c);
+  }
+
+  @media (max-width: 900px) {
+    .projet-grid { grid-template-columns: 1fr; }
+    .gallery-grid { grid-template-columns: repeat(2,1fr); }
+  }</style>
+</head>
+<body class="lang-fr">
+
+<div class="cursor-glow" id="cursorGlow"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo" onclick="showPage('home')">Ob<span>v</span>IA</div>
+  <ul class="nav-links">
+    <li><a href="#" onclick="showPage('home')" id="nav-home" class="active"><span class="fr">Accueil</span><span class="en">Home</span></a></li>
+    <li><a href="#" onclick="showPage('people')" id="nav-people"><span class="fr">Équipe</span><span class="en">People</span></a></li>
+    <li><a href="#" onclick="showPage('events')" id="nav-events"><span class="fr">Événements</span><span class="en">Events</span></a></li>
+    <li><a href="#" onclick="showPage('publications')" id="nav-publications"><span class="fr">Publications</span><span class="en">Publications</span></a></li>
+    <li><a href="#" onclick="showPage('contents')" id="nav-contents"><span class="fr">Contenus</span><span class="en">Contents</span></a></li>
+    <li><a href="#" onclick="showPage('pedagogie')" id="nav-pedagogie"><span class="fr">Pédagogie</span><span class="en">Pedagogy</span></a></li>
+    <li><a href="#" onclick="showPage('terrains')" id="nav-terrains"><span class="fr">Terrains</span><span class="en">Field</span></a></li>
+  </ul>
+  <button class="lang-switch" onclick="toggleLang()" id="langBtn">EN</button>
+</nav>
+
+<!-- ════════════════════════════════════
+     HOME PAGE
+════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg-text">ObvIA</div>
+    <div class="hero-tag">
+      <span class="fr">Observatoire de recherche — depuis 2024</span>
+      <span class="en">Research Observatory — since 2024</span>
+    </div>
+    <h1 class="hero-title">
+      <div class="t1">ObvIA</div>
+      <div class="t2">
+        <span class="fr">Observatoire de l'IA<br>dans les arts et les médias</span>
+        <span class="en">Observatory of AI<br>in Arts &amp; Media</span>
+      </div>
+    </h1>
+    <p class="hero-subtitle">
+      <span class="fr">UFR Arts et média – Université Sorbonne Nouvelle</span>
+      <span class="en">UFR Arts and Media – Université Sorbonne Nouvelle</span>
+    </p>
+    <div class="hero-cta">
+      <a href="#" class="btn btn-primary" onclick="showPage('home'); document.getElementById('about-anchor').scrollIntoView({behavior:'smooth'})">
+        <span class="fr">Découvrir le projet</span>
+        <span class="en">Discover the project</span>
+      </a>
+      <a href="#" class="btn btn-outline" onclick="showPage('publications')">
+        <span class="fr">Publications</span>
+        <span class="en">Publications</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- TICKER -->
+  <div class="ticker-wrap">
+    <div class="ticker">
+      <span>ObsIA — Industries culturelles — Création artistique — Intelligence artificielle — Usages — Imaginaires — Voix — Médias — Recherche</span>
+      <span>ObsIA — Cultural Industries — Artistic Creation — Artificial Intelligence — Uses — Imaginaries — Voices — Media — Research</span>
+    </div>
+  </div>
+
+  <!-- ABOUT -->
+  <section id="about-anchor">
+    <div class="section-label">
+      <span class="fr">À propos</span>
+      <span class="en">About</span>
+    </div>
+    <h2 class="section-title">
+      <span class="fr">Le <span class="accent">projet</span></span>
+      <span class="en">The <span class="accent">project</span></span>
+    </h2>
+
+    <div class="about-grid projet-grid">
+      <div class="projet-card">
+        <div class="projet-card-title">La fabrique du consensus autour de l'IA</div>
+        <p class="projet-card-text">Le déploiement des intelligences artificielles génératives dans les industries culturelles et la création artistique (ICCA) s'opère aujourd'hui sous le signe d'une évidence construite, portée par trois stratégies discursives complémentaires : la neutralisation technique du problème, le détournement vers des macro-inquiétudes long-termistes, et la requalification politique du débat en simple question d'acceptabilité. Ces mécanismes réduisent l'espace des controverses publiques et marginalisent les enjeux concrets (précarisation des professions, uniformisation esthétique, conflits de droits d'auteur) vécus au quotidien par les acteurs des ICCA.</p>
+        <p class="projet-card-text">Face à cette « fabrique du consensus », le projet ObvIA se propose de rendre visibles les tactiques de résistance, les imaginaires alternatifs et les formes d'agonisme créatif — au sens de Chantal Mouffe — qui émergent lorsque les acteurs intermédiaires doivent « faire avec » des outils conçus ailleurs. En articulant analyse des pratiques situées, élicitation des imaginaires sociotechniques et promotion d'espaces de dissensus productif, le projet offre une réponse empirique et participative à ce phénomène d'occultation.</p>
+      </div>
+      <div class="projet-card">
+        <div class="projet-card-title">Des pratiques situées aux controverses émergentes</div>
+        <p class="projet-card-text">La littérature existante sur l'IA et les ICCA se déploie autour de trois axes (auctorialité et droit d'auteur, enjeux éthiques et sociaux, collaborations humain-machine) mais souffre de deux limites majeures : un manque d'analyses finement situées des appropriations réelles, et une réflexion encore insuffisante sur les imaginaires et les controverses contemporaines. ObvIA comble ce double angle mort en documentant les usages bricolés des acteurs intermédiaires, en faisant émerger leurs imaginaires sociotechniques propres, distincts des grands récits institutionnels.</p>
+        <p class="projet-card-text">Par sa démarche participative (ateliers expérimentaux, focus groups, cartographie ouverte et interactive) le projet produit une base empirique solide pour structurer un espace commun de recherche au sein du consortium ICCA et pour développer, à moyen terme, des initiatives nationales et internationales sur les transformations sociotechniques de la culture.</p>
+      </div>
+    </div>
+
+    <div class="disclaimer-box">
+      ObvIA a bénéficié du soutien du plan d'investissement « France 2030 » via l'InIdEx ICCA mis en œuvre par l'Université Paris Cité (ANR-18-IDEX-0001) et hébergé par l'UFR Arts et média – Université Sorbonne Nouvelle.
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- AXES -->
+  <section>
+    <div class="section-label">
+      <span class="fr">Axes de recherche</span>
+      <span class="en">Research axes</span>
+    </div>
+    <h2 class="section-title">
+      <span class="fr">Nos <span class="accent">thématiques</span></span>
+      <span class="en">Our <span class="accent">themes</span></span>
+    </h2>
+    <div class="axes-grid">
+      <div class="axe-card">
+        <div class="axe-num">01</div>
+        <div class="axe-title"><span class="fr">Usages & pratiques</span><span class="en">Uses & practices</span></div>
+        <p class="axe-text fr">Comment les professionnels des industries culturelles intègrent-ils les outils d'IA dans leurs pratiques de création et de production ? Quelles logiques d'adoption, de résistance ou de négociation observe-t-on sur le terrain ?</p>
+        <p class="axe-text en">How do professionals in cultural industries integrate AI tools into their creation and production practices? What logics of adoption, resistance, or negotiation can be observed in the field?</p>
+      </div>
+      <div class="axe-card">
+        <div class="axe-num">02</div>
+        <div class="axe-title"><span class="fr">Voix & représentations</span><span class="en">Voices & representations</span></div>
+        <p class="axe-text fr">Quelles sont les voix qui configurent le débat public sur l'IA dans la culture ? Comment les médias, les artistes et les institutions construisent-ils des récits sur les potentialités et les risques de l'IA ?</p>
+        <p class="axe-text en">What voices shape the public debate on AI in culture? How do media, artists and institutions construct narratives about the potential and risks of AI?</p>
+      </div>
+      <div class="axe-card">
+        <div class="axe-num">03</div>
+        <div class="axe-title"><span class="fr">Imaginaires & fictions</span><span class="en">Imaginaries & fictions</span></div>
+        <p class="axe-text fr">Comment les œuvres de fiction anticipent-elles, critiquent-elles ou amplifient-elles les imaginaires de l'IA ? Quel rôle jouent les industries culturelles dans la construction sociale des technologies ?</p>
+        <p class="axe-text en">How do works of fiction anticipate, critique or amplify imaginaries of AI? What role do cultural industries play in the social construction of technologies?</p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <!-- NEWS PREVIEW -->
+  <section>
+    <div class="section-label">
+      <span class="fr">Actualités</span>
+      <span class="en">Latest news</span>
+    </div>
+    <h2 class="section-title">
+      <span class="fr">Derniers <span class="accent">événements</span></span>
+      <span class="en">Recent <span class="accent">events</span></span>
+    </h2>
+    <div class="events-list">
+      <div class="event-card">
+        <div class="event-date">15 OCT<br>2025</div>
+        <div>
+          <div class="event-title fr">Colloque international — IA et création musicale</div>
+          <div class="event-title en">International conference — AI and musical creation</div>
+          <div class="event-desc fr">Paris, [Placeholder institution] — Journée d'étude réunissant chercheurs et professionnels de la musique autour des transformations induites par l'IA générative.</div>
+          <div class="event-desc en">Paris, [Placeholder institution] — Study day bringing together researchers and music professionals around transformations induced by generative AI.</div>
+        </div>
+        <div class="event-type conference">Conference</div>
+      </div>
+      <div class="event-card">
+        <div class="event-date">22 NOV<br>2025</div>
+        <div>
+          <div class="event-title fr">Séminaire mensuel ObsIA</div>
+          <div class="event-title en">Monthly ObsIA seminar</div>
+          <div class="event-desc fr">Présentation de travaux en cours par [Placeholder nom], [Placeholder affiliation].</div>
+          <div class="event-desc en">Presentation of work in progress by [Placeholder name], [Placeholder affiliation].</div>
+        </div>
+        <div class="event-type seminar">Seminar</div>
+      </div>
+    </div>
+    <br>
+    <a href="#" class="btn btn-outline" onclick="showPage('events')">
+      <span class="fr">Tous les événements</span>
+      <span class="en">All events</span>
+    </a>
+  </section>
+
+  <footer>
+    <div>
+      <div class="footer-logo">ObvIA</div>
+      <div class="footer-desc fr">Observatoire de l'IA dans les arts et les médias — UFR Arts et média, Université Sorbonne Nouvelle.</div>
+      <div class="footer-desc en">Observatory of AI in Arts and Media — UFR Arts and Media, Université Sorbonne Nouvelle.</div>
+    </div>
+    <div class="footer-right">
+      <div>obsIA@sorbonne-nouvelle.fr</div>
+      <div>© 2024–2025 ObvIA</div>
+      <div style="color: var(--cyan); font-size:0.6rem; margin-top:0.5rem;">// SYSTEM ONLINE</div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PEOPLE PAGE
+════════════════════════════════════ -->
+<div class="page" id="page-people">
+  <div class="page-header">
+    <div class="page-header-bg">TEAM</div>
+    <div class="section-label"><span class="fr">L'équipe</span><span class="en">The team</span></div>
+    <h1 class="section-title"><span class="fr"><span class="accent">Personnes</span> impliquées</span><span class="en"><span class="accent">People</span> involved</span></h1>
+  </div>
+
+  <div class="people-section">
+    <div class="section-label"><span class="fr">Équipe de recherche</span><span class="en">Research team</span></div>
+    <br>
+    <div class="team-grid">
+      <div class="person-card" onclick="openBio('PP','Prénom Nom','Responsable scientifique','[Placeholder institution], [Placeholder laboratoire]','Biographie à compléter. Domaines de recherche, publications principales, responsabilités au sein du projet ObvIA.')">
+        <div class="person-avatar">PP</div>
+        <div class="person-name">Prénom Nom</div>
+        <div class="person-role"><span class="fr">Responsable scientifique</span><span class="en">Principal investigator</span></div>
+        <div class="person-affiliation">[Placeholder institution], [Placeholder laboratoire]</div>
+      </div>
+      <div class="person-card" onclick="openBio('PP','Prénom Nom','Co-responsable','[Placeholder institution], [Placeholder département]','Biographie à compléter. Domaines de recherche, publications principales, responsabilités au sein du projet ObvIA.')">
+        <div class="person-avatar">PP</div>
+        <div class="person-name">Prénom Nom</div>
+        <div class="person-role"><span class="fr">Co-responsable</span><span class="en">Co-investigator</span></div>
+        <div class="person-affiliation">[Placeholder institution], [Placeholder département]</div>
+      </div>
+      <div class="person-card" onclick="openBio('PP','Prénom Nom','Chercheur·e','[Placeholder institution]','Biographie à compléter. Domaines de recherche, publications principales, responsabilités au sein du projet ObvIA.')">
+        <div class="person-avatar">PP</div>
+        <div class="person-name">Prénom Nom</div>
+        <div class="person-role"><span class="fr">Chercheur·e</span><span class="en">Researcher</span></div>
+        <div class="person-affiliation">[Placeholder institution]</div>
+      </div>
+      <div class="person-card" onclick="openBio('PP','Prénom Nom','Chercheur·e','[Placeholder institution]','Biographie à compléter. Domaines de recherche, publications principales, responsabilités au sein du projet ObvIA.')">
+        <div class="person-avatar">PP</div>
+        <div class="person-name">Prénom Nom</div>
+        <div class="person-role"><span class="fr">Chercheur·e</span><span class="en">Researcher</span></div>
+        <div class="person-affiliation">[Placeholder institution]</div>
+      </div>
+      <div class="person-card" onclick="openBio('PP','Prénom Nom','Doctorant·e','[Placeholder université]','Biographie à compléter. Sujet de thèse, directeur·rice de recherche, travaux en cours au sein du projet ObvIA.')">
+        <div class="person-avatar">PP</div>
+        <div class="person-name">Prénom Nom</div>
+        <div class="person-role"><span class="fr">Doctorant·e</span><span class="en">PhD candidate</span></div>
+        <div class="person-affiliation">[Placeholder université]</div>
+      </div>
+      <div class="person-card" onclick="openBio('PP','Prénom Nom','Doctorant·e','[Placeholder université]','Biographie à compléter. Sujet de thèse, directeur·rice de recherche, travaux en cours au sein du projet ObvIA.')">
+        <div class="person-avatar">PP</div>
+        <div class="person-name">Prénom Nom</div>
+        <div class="person-role"><span class="fr">Doctorant·e</span><span class="en">PhD candidate</span></div>
+        <div class="person-affiliation">[Placeholder université]</div>
+      </div>
+      <div class="person-card" onclick="openBio('PP','Prénom Nom','Post-doctorant·e','[Placeholder institution]','Biographie à compléter. Domaines de recherche post-doctoraux, publications récentes, contribution au projet ObvIA.')">
+        <div class="person-avatar">PP</div>
+        <div class="person-name">Prénom Nom</div>
+        <div class="person-role"><span class="fr">Post-doctorant·e</span><span class="en">Post-doc</span></div>
+        <div class="person-affiliation">[Placeholder institution]</div>
+      </div>
+      <div class="person-card" onclick="openBio('PP','Prénom Nom','Ingénieur·e de recherche','[Placeholder institution]','Biographie à compléter. Compétences techniques, projets menés, contribution aux outils et méthodes du projet ObvIA.')">
+        <div class="person-avatar">PP</div>
+        <div class="person-name">Prénom Nom</div>
+        <div class="person-role"><span class="fr">Ingénieur·e de recherche</span><span class="en">Research engineer</span></div>
+        <div class="person-affiliation">[Placeholder institution]</div>
+      </div>
+    </div>
+
+
+  </div>
+
+  <footer>
+    <div>
+      <div class="footer-logo">ObvIA</div>
+      <div class="footer-desc fr">Observatoire de l'IA dans les arts et les médias — UFR Arts et média, Université Sorbonne Nouvelle.</div>
+      <div class="footer-desc en">Observatory of AI in Arts and Media — UFR Arts and Media, Université Sorbonne Nouvelle.</div>
+    </div>
+    <div class="footer-right">
+      <div>obsIA@sorbonne-nouvelle.fr</div>
+      <div>© 2024–2025 ObvIA</div>
+      <div style="color: var(--cyan); font-size:0.6rem; margin-top:0.5rem;">// SYSTEM ONLINE</div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════════
+     EVENTS PAGE
+════════════════════════════════════ -->
+<div class="page" id="page-events">
+  <div class="page-header">
+    <div class="page-header-bg">EVT</div>
+    <div class="section-label"><span class="fr">Agenda scientifique</span><span class="en">Scientific agenda</span></div>
+    <h1 class="section-title"><span class="fr"><span class="accent">Événements</span></span><span class="en"><span class="accent">Events</span></span></h1>
+  </div>
+
+  <section>
+    <div class="section-label"><span class="fr">À venir</span><span class="en">Upcoming</span></div>
+    <br>
+    <div class="events-list">
+      <div class="event-card">
+        <div class="event-date">MAR 2026<br>[Date]</div>
+        <div>
+          <div class="event-title fr">Placeholder — Titre de l'événement à venir</div>
+          <div class="event-title en">Placeholder — Title of upcoming event</div>
+          <div class="event-desc fr">[Placeholder lieu] — Description de l'événement, intervenants pressentis, thématiques abordées. Inscription à venir.</div>
+          <div class="event-desc en">[Placeholder venue] — Event description, expected speakers, themes addressed. Registration coming soon.</div>
+        </div>
+        <div class="event-type conference">Conference</div>
+      </div>
+      <div class="event-card">
+        <div class="event-date">AVR 2026<br>[Date]</div>
+        <div>
+          <div class="event-title fr">Séminaire ObsIA — [Placeholder titre]</div>
+          <div class="event-title en">ObsIA seminar — [Placeholder title]</div>
+          <div class="event-desc fr">[Placeholder lieu] — Séminaire mensuel de l'observatoire. Présentation de recherches en cours.</div>
+          <div class="event-desc en">[Placeholder venue] — Monthly observatory seminar. Presentation of ongoing research.</div>
+        </div>
+        <div class="event-type seminar">Seminar</div>
+      </div>
+      <div class="event-card">
+        <div class="event-date">MAI 2026<br>[Date]</div>
+        <div>
+          <div class="event-title fr">Atelier doctoral ObsIA</div>
+          <div class="event-title en">ObsIA doctoral workshop</div>
+          <div class="event-desc fr">[Placeholder lieu] — Atelier destiné aux doctorant·es impliqué·es dans les thématiques de l'observatoire.</div>
+          <div class="event-desc en">[Placeholder venue] — Workshop for doctoral students involved in the observatory's themes.</div>
+        </div>
+        <div class="event-type workshop">Workshop</div>
+      </div>
+    </div>
+
+    <br><br>
+    <div class="section-label"><span class="fr">Passés</span><span class="en">Past</span></div>
+    <br>
+    <div class="events-list">
+      <div class="event-card past">
+        <div class="event-date past">OCT 2025<br>15</div>
+        <div>
+          <div class="event-title fr">Colloque — IA et création musicale</div>
+          <div class="event-title en">Conference — AI and musical creation</div>
+          <div class="event-desc fr">Paris — Journée d'étude réunissant chercheurs et professionnels autour des transformations induites par l'IA générative dans l'industrie musicale.</div>
+          <div class="event-desc en">Paris — Study day bringing together researchers and professionals around transformations induced by generative AI in the music industry.</div>
+        </div>
+        <div class="event-type conference">Conference</div>
+      </div>
+      <div class="event-card past">
+        <div class="event-date past">SEPT 2025<br>12</div>
+        <div>
+          <div class="event-title fr">Séminaire — Imaginaires de l'IA dans le cinéma contemporain</div>
+          <div class="event-title en">Seminar — AI imaginaries in contemporary cinema</div>
+          <div class="event-desc fr">[Placeholder lieu] — Présentation par [Placeholder nom].</div>
+          <div class="event-desc en">[Placeholder venue] — Presentation by [Placeholder name].</div>
+        </div>
+        <div class="event-type seminar">Seminar</div>
+      </div>
+      <div class="event-card past">
+        <div class="event-date past">JUIN 2025<br>05</div>
+        <div>
+          <div class="event-title fr">Atelier — Méthodes d'analyse de corpus numériques</div>
+          <div class="event-title en">Workshop — Methods for digital corpus analysis</div>
+          <div class="event-desc fr">[Placeholder lieu] — Formation méthodologique pour les membres du projet.</div>
+          <div class="event-desc en">[Placeholder venue] — Methodological training for project members.</div>
+        </div>
+        <div class="event-type workshop">Workshop</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div>
+      <div class="footer-logo">ObsIA</div>
+      <div class="footer-desc fr">Pour être informé des prochains événements, contactez-nous à obsIA@sorbonne-nouvelle.fr</div>
+      <div class="footer-desc en">To be informed of upcoming events, contact us at obsIA@sorbonne-nouvelle.fr</div>
+    </div>
+    <div class="footer-right">
+      <div>obsIA@sorbonne-nouvelle.fr</div>
+      <div>© 2024–2025 ObvIA</div>
+      <div style="color: var(--cyan); font-size:0.6rem; margin-top:0.5rem;">// SYSTEM ONLINE</div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PUBLICATIONS PAGE
+════════════════════════════════════ -->
+<div class="page" id="page-publications">
+  <div class="page-header">
+    <div class="page-header-bg">PUB</div>
+    <div class="section-label"><span class="fr">Production scientifique</span><span class="en">Scientific output</span></div>
+    <h1 class="section-title"><span class="fr"><span class="accent">Publications</span></span><span class="en"><span class="accent">Publications</span></span></h1>
+  </div>
+
+  <section>
+    <div class="section-label"><span class="fr">Articles de revue</span><span class="en">Journal articles</span></div>
+    <br>
+    <div class="pub-list">
+      <div class="pub-item">
+        <div class="pub-type"><span class="fr">Article — Revue à comité de lecture</span><span class="en">Article — Peer-reviewed journal</span></div>
+        <div class="pub-title">Placeholder — Titre de l'article à compléter</div>
+        <div class="pub-authors">Nom Auteur, Nom Auteur, Nom Auteur</div>
+        <div class="pub-journal">Placeholder Revue / Journal, vol. X, n° X</div>
+        <div class="pub-year">2025 — DOI: 10.XXXX/placeholder</div>
+      </div>
+      <div class="pub-item">
+        <div class="pub-type"><span class="fr">Article — Revue à comité de lecture</span><span class="en">Article — Peer-reviewed journal</span></div>
+        <div class="pub-title">Placeholder — Titre de l'article à compléter</div>
+        <div class="pub-authors">Nom Auteur, Nom Auteur</div>
+        <div class="pub-journal">Placeholder Revue / Journal, vol. X, n° X</div>
+        <div class="pub-year">2025 — DOI: 10.XXXX/placeholder</div>
+      </div>
+      <div class="pub-item">
+        <div class="pub-type"><span class="fr">Article — Revue à comité de lecture</span><span class="en">Article — Peer-reviewed journal</span></div>
+        <div class="pub-title">Placeholder — Titre de l'article à compléter</div>
+        <div class="pub-authors">Nom Auteur</div>
+        <div class="pub-journal">Placeholder Revue / Journal, vol. X, n° X</div>
+        <div class="pub-year">2024 — DOI: 10.XXXX/placeholder</div>
+      </div>
+    </div>
+
+    <br><br>
+    <div class="section-label"><span class="fr">Chapitres d'ouvrages</span><span class="en">Book chapters</span></div>
+    <br>
+    <div class="pub-list">
+      <div class="pub-item">
+        <div class="pub-type"><span class="fr">Chapitre d'ouvrage</span><span class="en">Book chapter</span></div>
+        <div class="pub-title">Placeholder — Titre du chapitre à compléter</div>
+        <div class="pub-authors">Nom Auteur, Nom Auteur</div>
+        <div class="pub-journal fr">In : Nom Dir. (dir.), <em>Titre de l'ouvrage</em>. Éditeur, Ville.</div>
+        <div class="pub-journal en">In: Name Ed. (ed.), <em>Book title</em>. Publisher, City.</div>
+        <div class="pub-year">2025</div>
+      </div>
+      <div class="pub-item">
+        <div class="pub-type"><span class="fr">Chapitre d'ouvrage</span><span class="en">Book chapter</span></div>
+        <div class="pub-title">Placeholder — Titre du chapitre à compléter</div>
+        <div class="pub-authors">Nom Auteur</div>
+        <div class="pub-journal fr">In : Nom Dir. (dir.), <em>Titre de l'ouvrage</em>. Éditeur, Ville.</div>
+        <div class="pub-journal en">In: Name Ed. (ed.), <em>Book title</em>. Publisher, City.</div>
+        <div class="pub-year">2024</div>
+      </div>
+    </div>
+
+    <br><br>
+    <div class="section-label"><span class="fr">Communications</span><span class="en">Conference papers</span></div>
+    <br>
+    <div class="pub-list">
+      <div class="pub-item">
+        <div class="pub-type"><span class="fr">Communication — Colloque international</span><span class="en">Paper — International conference</span></div>
+        <div class="pub-title">Placeholder — Titre de la communication à compléter</div>
+        <div class="pub-authors">Nom Auteur, Nom Auteur</div>
+        <div class="pub-journal fr">Placeholder Colloque, [Lieu], [Date]</div>
+        <div class="pub-journal en">Placeholder Conference, [Venue], [Date]</div>
+        <div class="pub-year">2025</div>
+      </div>
+      <div class="pub-item">
+        <div class="pub-type"><span class="fr">Communication — Journée d'étude</span><span class="en">Paper — Study day</span></div>
+        <div class="pub-title">Placeholder — Titre de la communication à compléter</div>
+        <div class="pub-authors">Nom Auteur</div>
+        <div class="pub-journal fr">Placeholder Journée, [Lieu], [Date]</div>
+        <div class="pub-journal en">Placeholder Study day, [Venue], [Date]</div>
+        <div class="pub-year">2024</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div>
+      <div class="footer-logo">ObsIA</div>
+      <div class="footer-desc fr">Pour toute question relative aux publications, contactez obsIA@sorbonne-nouvelle.fr</div>
+      <div class="footer-desc en">For any question related to publications, contact obsIA@sorbonne-nouvelle.fr</div>
+    </div>
+    <div class="footer-right">
+      <div>obsIA@sorbonne-nouvelle.fr</div>
+      <div>© 2024–2025 ObvIA</div>
+      <div style="color: var(--cyan); font-size:0.6rem; margin-top:0.5rem;">// SYSTEM ONLINE</div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════════
+     CONTENTS PAGE
+════════════════════════════════════ -->
+<div class="page" id="page-contents">
+  <div class="page-header">
+    <div class="page-header-bg">VID</div>
+    <div class="section-label"><span class="fr">Vidéothèque</span><span class="en">Video library</span></div>
+    <h1 class="section-title"><span class="fr"><span class="accent">Contenus</span> & médias</span><span class="en"><span class="accent">Contents</span> & media</span></h1>
+  </div>
+
+  <section>
+    <div class="section-label"><span class="fr">Conférences filmées</span><span class="en">Recorded conferences</span></div>
+    <br>
+    <div class="videos-grid">
+
+      <div class="video-card">
+        <div class="video-thumb">
+          <div class="video-thumb-lines"></div>
+          <div class="play-btn"></div>
+        </div>
+        <div class="video-info">
+          <div class="video-tag">Conference</div>
+          <div class="video-title fr">Placeholder — Titre de la conférence</div>
+          <div class="video-title en">Placeholder — Conference title</div>
+          <div class="video-speaker">Prénom Nom — [Placeholder institution]</div>
+          <div class="video-date">OCT 2025 — [Placeholder durée / duration]</div>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-thumb">
+          <div class="video-thumb-lines"></div>
+          <div class="play-btn"></div>
+        </div>
+        <div class="video-info">
+          <div class="video-tag">Séminaire / Seminar</div>
+          <div class="video-title fr">Placeholder — Titre du séminaire</div>
+          <div class="video-title en">Placeholder — Seminar title</div>
+          <div class="video-speaker">Prénom Nom — [Placeholder institution]</div>
+          <div class="video-date">SEPT 2025 — [Placeholder durée / duration]</div>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-thumb">
+          <div class="video-thumb-lines"></div>
+          <div class="play-btn"></div>
+        </div>
+        <div class="video-info">
+          <div class="video-tag">Table ronde / Panel</div>
+          <div class="video-title fr">Placeholder — Titre de la table ronde</div>
+          <div class="video-title en">Placeholder — Panel title</div>
+          <div class="video-speaker">Plusieurs intervenants / Multiple speakers</div>
+          <div class="video-date">JUIN 2025 — [Placeholder durée / duration]</div>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-thumb">
+          <div class="video-thumb-lines"></div>
+          <div class="play-btn"></div>
+        </div>
+        <div class="video-info">
+          <div class="video-tag">Keynote</div>
+          <div class="video-title fr">Placeholder — Titre de la keynote</div>
+          <div class="video-title en">Placeholder — Keynote title</div>
+          <div class="video-speaker">Prénom Nom — [Placeholder institution]</div>
+          <div class="video-date">MAI 2025 — [Placeholder durée / duration]</div>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-thumb">
+          <div class="video-thumb-lines"></div>
+          <div class="play-btn"></div>
+        </div>
+        <div class="video-info">
+          <div class="video-tag">Conference</div>
+          <div class="video-title fr">Placeholder — Titre de la conférence</div>
+          <div class="video-title en">Placeholder — Conference title</div>
+          <div class="video-speaker">Prénom Nom — [Placeholder institution]</div>
+          <div class="video-date">MARS 2025 — [Placeholder durée / duration]</div>
+        </div>
+      </div>
+
+      <div class="video-card">
+        <div class="video-thumb">
+          <div class="video-thumb-lines"></div>
+          <div class="play-btn"></div>
+        </div>
+        <div class="video-info">
+          <div class="video-tag">Séminaire / Seminar</div>
+          <div class="video-title fr">Placeholder — Titre du séminaire</div>
+          <div class="video-title en">Placeholder — Seminar title</div>
+          <div class="video-speaker">Prénom Nom — [Placeholder institution]</div>
+          <div class="video-date">JAN 2025 — [Placeholder durée / duration]</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <hr class="divider" style="margin: 0 4rem;">
+
+  <!-- PHOTOTHÈQUE -->
+  <section>
+    <div class="section-label"><span class="fr">Photothèque</span><span class="en">Photo library</span></div>
+    <br>
+    <div class="photos-grid">
+
+      <div class="photo-card" onclick="openPhotoEvent('Colloque — IA et création musicale', 'OCT 2025', 'Paris, Sorbonne Nouvelle', 'Journée d\'étude réunissant chercheurs, artistes et professionnels de la musique autour des transformations induites par l\'IA générative dans l\'industrie musicale. La journée a alterné communications scientifiques, démonstrations d\'outils et tables rondes avec des praticiens.', 6)">
+        <div class="photo-thumb">
+          <div class="photo-thumb-grid"></div>
+          <div class="photo-icon">⬡</div>
+        </div>
+        <div class="photo-info">
+          <div class="photo-tag">Colloque</div>
+          <div class="photo-title">IA et création musicale</div>
+          <div class="photo-date">OCT 2025 — Paris</div>
+        </div>
+      </div>
+
+      <div class="photo-card" onclick="openPhotoEvent('Séminaire — Imaginaires de l\'IA dans le cinéma', 'SEPT 2025', 'Sorbonne Nouvelle', 'Séminaire mensuel de l\'observatoire consacré aux représentations de l\'IA dans le cinéma contemporain. Présentation suivie d\'une discussion ouverte entre chercheurs et doctorants sur les imaginaires dystopiques et utopiques véhiculés par les productions récentes.', 4)">
+        <div class="photo-thumb">
+          <div class="photo-thumb-grid"></div>
+          <div class="photo-icon">⬡</div>
+        </div>
+        <div class="photo-info">
+          <div class="photo-tag">Séminaire</div>
+          <div class="photo-title">Imaginaires de l'IA dans le cinéma</div>
+          <div class="photo-date">SEPT 2025 — Paris</div>
+        </div>
+      </div>
+
+      <div class="photo-card" onclick="openPhotoEvent('Atelier — Méthodes d\'analyse de corpus numériques', 'JUIN 2025', 'Sorbonne Nouvelle', 'Formation méthodologique destinée aux membres du projet. L\'atelier a couvert les principales méthodes d\'analyse de corpus textuels et visuels générés par IA : annotation, clustering sémantique, analyse des biais et visualisation des données.', 5)">
+        <div class="photo-thumb">
+          <div class="photo-thumb-grid"></div>
+          <div class="photo-icon">⬡</div>
+        </div>
+        <div class="photo-info">
+          <div class="photo-tag">Atelier</div>
+          <div class="photo-title">Méthodes d'analyse de corpus numériques</div>
+          <div class="photo-date">JUIN 2025 — Paris</div>
+        </div>
+      </div>
+
+      <div class="photo-card" onclick="openPhotoEvent('Table ronde — Droits d\'auteur et IA générative', 'AVR 2025', 'Paris, Maison des sciences de l\'Homme', 'Table ronde réunissant juristes, artistes et représentants d\'organisations professionnelles autour des enjeux de propriété intellectuelle soulevés par les outils d\'IA générative dans les industries culturelles.', 4)">
+        <div class="photo-thumb">
+          <div class="photo-thumb-grid"></div>
+          <div class="photo-icon">⬡</div>
+        </div>
+        <div class="photo-info">
+          <div class="photo-tag">Table ronde</div>
+          <div class="photo-title">Droits d'auteur et IA générative</div>
+          <div class="photo-date">AVR 2025 — Paris</div>
+        </div>
+      </div>
+
+      <div class="photo-card" onclick="openPhotoEvent('Journée d\'étude — IA et pratiques éditoriales', 'FÉV 2025', 'BnF — Bibliothèque nationale de France', 'Journée d\'étude organisée en partenariat avec la BnF consacrée aux usages de l\'IA dans les chaînes éditoriales : automatisation de la révision, génération de résumés, personnalisation des catalogues. Intervenants issus de maisons d\'édition, de bibliothèques et de la recherche.', 7)">
+        <div class="photo-thumb">
+          <div class="photo-thumb-grid"></div>
+          <div class="photo-icon">⬡</div>
+        </div>
+        <div class="photo-info">
+          <div class="photo-tag">Journée d'étude</div>
+          <div class="photo-title">IA et pratiques éditoriales</div>
+          <div class="photo-date">FÉV 2025 — Paris</div>
+        </div>
+      </div>
+
+      <div class="photo-card" onclick="openPhotoEvent('Conférence inaugurale — Lancement d\'ObvIA', 'JAN 2025', 'Sorbonne Nouvelle — Amphithéâtre Valdman', 'Conférence de lancement de l\'observatoire ObvIA réunissant l\'équipe de recherche, les partenaires institutionnels et un large public universitaire. Présentation des axes de recherche, de la méthodologie et du calendrier du projet pour 2025–2027.', 9)">
+        <div class="photo-thumb">
+          <div class="photo-thumb-grid"></div>
+          <div class="photo-icon">⬡</div>
+        </div>
+        <div class="photo-info">
+          <div class="photo-tag">Conférence inaugurale</div>
+          <div class="photo-title">Lancement d'ObvIA</div>
+          <div class="photo-date">JAN 2025 — Paris</div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <div>
+      <div class="footer-logo">ObvIA</div>
+      <div class="footer-desc fr">Les vidéos sont hébergées sur la chaîne YouTube ObvIA. Abonnez-vous pour être notifié des nouvelles publications.</div>
+      <div class="footer-desc en">Videos are hosted on the ObvIA YouTube channel. Subscribe to be notified of new uploads.</div>
+    </div>
+    <div class="footer-right">
+      <div>obsIA@sorbonne-nouvelle.fr</div>
+      <div>© 2024–2025 ObvIA</div>
+      <div style="color: var(--cyan); font-size:0.6rem; margin-top:0.5rem;">// SYSTEM ONLINE</div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PHOTO EVENT MODAL
+════════════════════════════════════ -->
+<div class="photo-modal-overlay" id="photoModal" onclick="closePhotoModal(event)">
+  <div class="photo-modal-box">
+    <button class="modal-close" onclick="closePhotoModal(null, true)">✕ FERMER</button>
+    <div class="modal-role" id="photoModalTag" style="margin-bottom:0.5rem;"></div>
+    <div class="modal-name" id="photoModalTitle" style="font-size:1.4rem; margin-bottom:0.3rem;"></div>
+    <div class="modal-affil" id="photoModalMeta"></div>
+    <div class="modal-bio" id="photoModalDesc"></div>
+    <div class="gallery-grid" id="photoModalGallery"></div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PÉDAGOGIE PAGE
+════════════════════════════════════ -->
+<div class="page" id="page-pedagogie">
+  <div class="page-header">
+    <div class="page-header-bg">PED</div>
+    <div class="section-label"><span class="fr">Enseignement & création</span><span class="en">Teaching & creation</span></div>
+    <h1 class="section-title"><span class="fr"><span class="accent">Pédagogie</span></span><span class="en"><span class="accent">Pedagogy</span></span></h1>
+  </div>
+
+  <section>
+    <div class="section-label"><span class="fr">Cours & ateliers</span><span class="en">Courses & workshops</span></div>
+    <br>
+    <div class="pedago-grid">
+
+      <div class="pedago-card" onclick="openPedago('Atelier — IA et écriture créative', 'Cours', 'Master Création numérique — UFR Arts et média', 'Cet atelier explore les usages de l\'IA générative dans les pratiques d\'écriture créative : génération de textes à partir de prompts, réécriture assistée, co-narration humain-machine. Les étudiants expérimentent différents outils (GPT, Claude, Mistral) et analysent les effets esthétiques, stylistiques et éthiques de ces collaborations.', ['Analyse comparative de textes générés par IA', 'Carnet de bord numérique (PDF)', 'Micro-narrations — travaux étudiants', 'Présentation de synthèse (slides)'])">
+        <div class="pedago-tag">Master — Cours</div>
+        <div class="pedago-title">IA et écriture créative</div>
+        <div class="pedago-desc">Exploration des usages de l'IA générative dans les pratiques d'écriture : prompts, co-narration humain-machine, effets stylistiques et éthiques.</div>
+        <div class="pedago-meta">Master Création numérique · UFR Arts et média</div>
+      </div>
+
+      <div class="pedago-card" onclick="openPedago('Séminaire — Imaginaires sociotechniques de l\'IA', 'Séminaire de recherche', 'Master Recherche Médias, cultures et communication', 'Ce séminaire propose une approche critique des imaginaires attachés à l\'intelligence artificielle dans les médias et les industries culturelles. À partir d\'études de cas (presse, cinéma, jeu vidéo, musique), les étudiants analysent les récits dominants, les rhétoriques de l\'inévitabilité et les formes de résistance ou d\'appropriation alternatives.', ['Recueil de revues de presse annotées', 'Cartographie des imaginaires (format numérique)', 'Essais critiques — travaux étudiants', 'Bibliographie commentée'])">
+        <div class="pedago-tag">Master — Séminaire</div>
+        <div class="pedago-title">Imaginaires sociotechniques de l'IA</div>
+        <div class="pedago-desc">Approche critique des récits dominants sur l'IA dans les médias et les industries culturelles, à partir d'études de cas et de travaux collectifs.</div>
+        <div class="pedago-meta">Master Recherche · UFR Arts et média</div>
+      </div>
+
+      <div class="pedago-card" onclick="openPedago('Atelier — Détournement d\'images générées par IA', 'Atelier pratique', 'Licence Arts — option Création numérique', 'Atelier pratique centré sur la critique et le détournement d\'images générées par des outils d\'IA (Midjourney, DALL-E, Stable Diffusion). Les étudiants analysent les biais visuels et culturels des images produites, puis conçoivent des contre-propositions artistiques sous forme de séries photographiques, de collages ou d\'interventions typographiques.', ['Séries de détournements — travaux étudiants', 'Analyse des biais visuels (rapport collectif)', 'Documentation photographique des ateliers', 'Présentation finale (slides)'])">
+        <div class="pedago-tag">Licence — Atelier</div>
+        <div class="pedago-title">Détournement d'images générées par IA</div>
+        <div class="pedago-desc">Critique et réappropriation artistique d'images produites par des outils génératifs. Analyse des biais, contre-propositions visuelles.</div>
+        <div class="pedago-meta">Licence Arts — option Création numérique · UFR Arts et média</div>
+      </div>
+
+      <div class="pedago-card" onclick="openPedago('Cours — Droit, éthique et IA dans les industries culturelles', 'Cours magistral', 'Master Droit de la culture & Industries créatives', 'Ce cours traite des enjeux juridiques et éthiques soulevés par l\'IA dans les industries culturelles : propriété intellectuelle, droit d\'auteur des œuvres générées, responsabilité des plateformes, régulation européenne (AI Act). Des intervenants extérieurs (juristes, représentants de syndicats, responsables de plateformes) participent à des séances de discussion.', ['Syllabus et supports de cours (PDF)', 'Études de cas juridiques commentées', 'Comptes rendus de séances avec intervenants', 'Travaux étudiants — analyses de cas'])">
+        <div class="pedago-tag">Master — Cours magistral</div>
+        <div class="pedago-title">Droit, éthique et IA dans les industries culturelles</div>
+        <div class="pedago-desc">Enjeux juridiques et éthiques de l'IA : propriété intellectuelle, droit d'auteur, AI Act européen, responsabilité des plateformes.</div>
+        <div class="pedago-meta">Master Droit de la culture · UFR Arts et média</div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer>
+    <div>
+      <div class="footer-logo">ObvIA</div>
+      <div class="footer-desc fr">Les ressources pédagogiques sont mises à disposition dans le cadre du projet ObvIA — UFR Arts et média, Sorbonne Nouvelle.</div>
+      <div class="footer-desc en">Teaching resources are made available as part of the ObvIA project — UFR Arts and Media, Sorbonne Nouvelle.</div>
+    </div>
+    <div class="footer-right">
+      <div>obsIA@sorbonne-nouvelle.fr</div>
+      <div>© 2024–2025 ObvIA</div>
+      <div style="color: var(--cyan); font-size:0.6rem; margin-top:0.5rem;">// SYSTEM ONLINE</div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- ════════════════════════════════════
+     PÉDAGOGIE MODAL
+════════════════════════════════════ -->
+<div class="pedago-modal-overlay" id="pedagoModal" onclick="closePedagoModal(event)">
+  <div class="pedago-modal-box">
+    <button class="modal-close" onclick="closePedagoModal(null, true)">✕ FERMER</button>
+    <div class="modal-role" id="pedagoModalTag" style="margin-bottom:0.5rem;"></div>
+    <div class="modal-name" id="pedagoModalTitle" style="font-size:1.3rem; margin-bottom:0.3rem;"></div>
+    <div class="modal-affil" id="pedagoModalAffil"></div>
+    <div class="modal-bio" id="pedagoModalDesc"></div>
+    <div class="material-list" id="pedagoModalMaterials"></div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════
+     TERRAINS PAGE
+════════════════════════════════════ -->
+<div class="page" id="page-terrains">
+  <div class="page-header">
+    <div class="page-header-bg">TER</div>
+    <div class="section-label"><span class="fr">Enquêtes de terrain</span><span class="en">Field research</span></div>
+    <h1 class="section-title"><span class="fr"><span class="accent">Terrains</span></span><span class="en"><span class="accent">Field</span></span></h1>
+  </div>
+
+  <section>
+    <div class="section-label"><span class="fr">Focus groups & ateliers</span><span class="en">Focus groups & workshops</span></div>
+    <br>
+    <div class="terrain-intro">
+      Le projet organise huit focus groups réunissant professionnels, chercheurs et artistes, conçus non comme de simples espaces de collecte de discours, mais comme des dispositifs d'agonisme créatif où décrire ses pratiques revient simultanément à les interroger et à les réinventer. Chaque session intègre des exercices concrets — critique collective d'images de synthèse, co-création de micro-narrations à partir de prompts génératifs, ateliers de détournement d'images, de vidéos ou de chatbots — afin de révéler les tensions et les écarts entre imaginaires déclarés et usages réels. Cette approche s'inscrit dans les propositions récentes de Marres et al. (2025) et de Grenier (2025), tout en s'inspirant des expérimentations menées par des artistes.
+    </div>
+  </section>
+
+  <footer>
+    <div>
+      <div class="footer-logo">ObvIA</div>
+      <div class="footer-desc fr">Pour en savoir plus sur les terrains du projet, contactez-nous à obsIA@sorbonne-nouvelle.fr</div>
+      <div class="footer-desc en">To learn more about the project's field research, contact us at obsIA@sorbonne-nouvelle.fr</div>
+    </div>
+    <div class="footer-right">
+      <div>obsIA@sorbonne-nouvelle.fr</div>
+      <div>© 2024–2025 ObvIA</div>
+      <div style="color: var(--cyan); font-size:0.6rem; margin-top:0.5rem;">// SYSTEM ONLINE</div>
+    </div>
+  </footer>
+</div>
+
+
+<!-- BIO MODAL (Équipe) -->
+<div class="modal-overlay" id="bioModal" onclick="closeBioModal(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeBioModal(null, true)">✕ FERMER</button>
+    <div class="modal-avatar" id="bioModalAvatar"></div>
+    <div class="modal-name" id="bioModalName"></div>
+    <div class="modal-role" id="bioModalRole"></div>
+    <div class="modal-affil" id="bioModalAffil"></div>
+    <div class="modal-bio" id="bioModalBio"></div>
+  </div>
+</div>
+
+
+<script>
+  // ── Bio modal (Équipe)
+  function openBio(initials, name, role, affil, bio) {
+    document.getElementById('bioModalAvatar').textContent = initials;
+    document.getElementById('bioModalName').textContent = name;
+    document.getElementById('bioModalRole').textContent = role;
+    document.getElementById('bioModalAffil').textContent = affil;
+    document.getElementById('bioModalBio').textContent = bio;
+    document.getElementById('bioModal').classList.add('open');
+  }
+  function closeBioModal(e, force) {
+    if (force || e.target === document.getElementById('bioModal'))
+      document.getElementById('bioModal').classList.remove('open');
+  }
+
+  // ── Photo event modal
+  function openPhotoEvent(title, date, location, description, photoCount) {
+    document.getElementById('photoModalTag').textContent = date + ' — ' + location;
+    document.getElementById('photoModalTitle').textContent = title;
+    document.getElementById('photoModalMeta').textContent = '';
+    document.getElementById('photoModalDesc').textContent = description;
+    const grid = document.getElementById('photoModalGallery');
+    grid.innerHTML = '';
+    for (let i = 0; i < photoCount; i++) {
+      const item = document.createElement('div');
+      item.className = 'gallery-item';
+      item.innerHTML = '<span style="position:relative;z-index:1;">[ Photo ' + (i + 1) + ' ]</span>';
+      grid.appendChild(item);
+    }
+    document.getElementById('photoModal').classList.add('open');
+  }
+  function closePhotoModal(e, force) {
+    if (force || e.target === document.getElementById('photoModal'))
+      document.getElementById('photoModal').classList.remove('open');
+  }
+
+  // ── Pédagogie modal
+  function openPedago(title, tag, affil, description, materials) {
+    document.getElementById('pedagoModalTag').textContent = tag;
+    document.getElementById('pedagoModalTitle').textContent = title;
+    document.getElementById('pedagoModalAffil').textContent = affil;
+    document.getElementById('pedagoModalDesc').textContent = description;
+    const list = document.getElementById('pedagoModalMaterials');
+    list.innerHTML = '';
+    materials.forEach(function(m) {
+      list.innerHTML += '<div class="material-item"><div class="material-icon">//</div><div><div class="material-label">' + m + '</div><div class="material-sub">[ Placeholder — à téléverser ]</div></div></div>';
+    });
+    document.getElementById('pedagoModal').classList.add('open');
+  }
+  function closePedagoModal(e, force) {
+    if (force || e.target === document.getElementById('pedagoModal'))
+      document.getElementById('pedagoModal').classList.remove('open');
+  }
+
+  // ── Close modals on Escape
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      document.getElementById('bioModal').classList.remove('open');
+      document.getElementById('photoModal').classList.remove('open');
+      document.getElementById('pedagoModal').classList.remove('open');
+    }
+  });
+
+
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+    document.getElementById('page-' + id).classList.add('active');
+    document.getElementById('nav-' + id).classList.add('active');
+    window.scrollTo(0, 0);
+    return false;
+  }
+
+  // ── Language toggle
+  let currentLang = 'fr';
+  function toggleLang() {
+    currentLang = currentLang === 'fr' ? 'en' : 'fr';
+    document.body.className = 'lang-' + currentLang;
+    document.getElementById('langBtn').textContent = currentLang === 'fr' ? 'EN' : 'FR';
+    document.documentElement.lang = currentLang;
+  }
+
+  // ── Cursor glow
+  const glow = document.getElementById('cursorGlow');
+  document.addEventListener('mousemove', e => {
+    glow.style.left = e.clientX + 'px';
+    glow.style.top = e.clientY + 'px';
+  });
+
+  // ── Nav prevent default
+  document.querySelectorAll('.nav-links a').forEach(a => {
+    a.addEventListener('click', e => e.preventDefault());
+  });
+
+  // ── Glitch flicker on random elements
+  setInterval(() => {
+    const elements = document.querySelectorAll('.stat-number, .axe-num');
+    const el = elements[Math.floor(Math.random() * elements.length)];
+    if (el) {
+      el.style.opacity = '0.3';
+      setTimeout(() => { el.style.opacity = '1'; }, 80);
+    }
+  }, 2500);
+</script>
+</body>
+</html>
