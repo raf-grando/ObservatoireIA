@@ -2187,12 +2187,13 @@
 
 
 <script>
-  // ── Bio modal (Équipe)
+// ── Bio modal (Équipe)
   function openBio(initials, name, role, affil, bioFr, bioEn) {
-    // Detect current language from the lang switch button
-    var currentLang = document.getElementById('langBtn').textContent.trim(); // "EN" or "FR"
+    // Button shows the *other* language: "EN" when site is FR, "FR" when site is EN
+    var langButton = document.getElementById('langBtn').textContent.trim(); // "EN" or "FR"
+    var currentLang = (langButton === 'EN') ? 'fr' : 'en';
 
-    var bioToShow = (currentLang === 'EN') ? bioEn : bioFr;
+    var bioToShow = (currentLang === 'en') ? bioEn : bioFr;
 
     document.getElementById('bioModalAvatar').textContent = initials;
     document.getElementById('bioModalName').textContent = name;
