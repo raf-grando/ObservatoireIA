@@ -103,7 +103,13 @@ nav {
   list-style: none;
   overflow-x: auto;                 /* allow horizontal scroll */
   -webkit-overflow-scrolling: touch;/* smooth on mobile */
-  white-space: nowrap;              /* keep items on one line */
+  scrollbar-width: none;           /* Firefox */
+  -ms-overflow-style: none;        /* IE/Edge */
+}
+
+/* Hide scrollbar for Chrome/Safari/Opera */
+.nav-links::-webkit-scrollbar {
+  display: none;
 }
 
 .nav-links a {
